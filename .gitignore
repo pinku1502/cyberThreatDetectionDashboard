@@ -1,0 +1,33 @@
+# Dependencies
+**/node_modules/
+
+# Build output
+**/dist/
+**/build/
+**/.vite/
+
+# Runtime output
+.runtime-logs/
+**/*.log
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python caches and local tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Local training datasets and generated analysis
+/dataset/
+/ml/analysis/
+/ml/saved_model/analysis/
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db

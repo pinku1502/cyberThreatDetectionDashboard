@@ -1,0 +1,11 @@
+Feature,Importance
+Bwd Packet Length Mean,0.1720341123545421
+Average Packet Size,0.1192329862026277
+Total Length of Bwd Packets,0.11232243594601417
+Total Length of Fwd Packets,0.09697785476006847
+Fwd Packet Length Mean,0.0734323002751105
+Total Fwd Packets,0.06945282292613025
+Idle Mean,0.05356578054828913
+Flow Packets/s,0.05041103104065303
+Destination Port,0.04880276468278985
+Total Backward Packets,0.040046119477617166
