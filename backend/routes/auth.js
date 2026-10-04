@@ -32,8 +32,12 @@ router.post("/bootstrap", async (req, res) => {
   }
 });
 
+const { recordFailedLogin, recordSuccessfulLogin } = require("../middleware/selfThreatMonitor");
+
 router.post("/login", async (req, res) => {
   const { email, password } = req.body || {};
+  const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
   if (!email || !password) return res.status(400).json({ success: false, message: "Email and password are required" });
 
   try {
@@ -44,8 +48,13 @@ router.post("/login", async (req, res) => {
     const user = rows[0];
 
     if (!user || !verifyPassword(password, user.password_hash)) {
+      // Record failed login for self-monitoring brute force detection
+      recordFailedLogin(clientIp, email).catch(() => {});
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
+
+    // Reset failed counter on successful login
+    recordSuccessfulLogin(clientIp);
 
     return res.json({
       success: true,

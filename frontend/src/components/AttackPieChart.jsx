@@ -27,90 +27,82 @@ function AttackPieChart({ websiteId }) {
     return () => clearInterval(interval);
   }, [websiteId]);
 
-  // 15-Class Cyber Security Colors
+  const totalCount = attackData.reduce((acc, curr) => acc + Number(curr.count || 0), 0);
+
   const attackColors = {
-    BENIGN: "#22C55E",
-    DDoS: "#DC2626",
-    "DoS Hulk": "#EA580C",
-    "DoS GoldenEye": "#F97316",
-    "DoS Slowloris": "#FB923C",
-    "DoS Slowhttptest": "#FDBA74",
-    PortScan: "#2563EB",
-    Bot: "#7C3AED",
+    BENIGN: "#2563EB",
+    DDoS: "#EF4444",
+    "DoS Hulk": "#F97316",
+    "DoS GoldenEye": "#FB923C",
+    "DoS Slowloris": "#FBBF24",
+    "DoS Slowhttptest": "#F59E0B",
+    PortScan: "#3B82F6",
+    Bot: "#8B5CF6",
     "FTP-Patator": "#EAB308",
     "SSH-Patator": "#06B6D4",
-    Heartbleed: "#991B1B",
+    Heartbleed: "#DC2626",
     Infiltration: "#EC4899",
     "Web Attack Brute Force": "#14B8A6",
     "Web Attack SQL Injection": "#0D9488",
     "Web Attack XSS": "#6366F1",
   };
 
-  const COLORS = attackData.map(
-    (item) => attackColors[item.attack_name] || "#64748B"
-  );
+  const displayData = attackData.length > 0 ? attackData : [{ attack_name: "BENIGN", count: 1 }];
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-5">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 flex flex-col justify-between">
+      {/* Card Header */}
+      <div className="flex items-start justify-between mb-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">
+          <h2 className="text-base font-bold text-slate-800">
             Attack Distribution
           </h2>
-          <p className="text-sm text-gray-500">
-            Live prediction distribution from CICIDS2017 network traffic.
+          <p className="text-xs text-slate-400 mt-0.5">
+            Live prediction distribution from MySQL database.
           </p>
         </div>
 
-        <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-2 rounded-full">
-          {attackData.length} ATTACK TYPES
+        <span className="bg-blue-50 text-blue-600 text-xs font-semibold px-2.5 py-1 rounded-lg border border-blue-100">
+          Total: {totalCount}
         </span>
       </div>
 
-      {/* Pie Chart */}
-      <div className="h-[360px]">
+      {/* Donut Chart */}
+      <div className="h-[280px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={attackData}
+              data={displayData}
               dataKey="count"
               nameKey="attack_name"
-              cx="50%"
+              cx="45%"
               cy="50%"
-              outerRadius={120}
-              innerRadius={55}
+              outerRadius={100}
+              innerRadius={65}
+              strokeWidth={0}
               paddingAngle={2}
-              label={({ attack_name, percent }) =>
-                percent > 0.04
-                  ? `${attack_name} ${(percent * 100).toFixed(0)}%`
-                  : ""
-              }
             >
-              {attackData.map((entry, index) => (
-                <Cell key={index} fill={COLORS[index]} />
+              {displayData.map((entry, index) => (
+                <Cell
+                  key={index}
+                  fill={attackColors[entry.attack_name] || "#2563EB"}
+                />
               ))}
             </Pie>
-
             <Tooltip
-              formatter={(value) => [`${value} Packets`, "Detected"]}
+              formatter={(value, name) => [`${value} logs`, name]}
+              contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0" }}
             />
-
             <Legend
-              verticalAlign="bottom"
-              height={36}
-              wrapperStyle={{ fontSize: "12px" }}
+              layout="vertical"
+              align="right"
+              verticalAlign="middle"
+              iconType="square"
+              iconSize={10}
+              wrapperStyle={{ fontSize: "12px", fontWeight: "600", color: "#334155" }}
             />
           </PieChart>
         </ResponsiveContainer>
-      </div>
-
-      {/* Bottom Status */}
-      <div className="mt-4 flex justify-between text-sm text-gray-500 border-t pt-4">
-        <span>Live MySQL Prediction Logs</span>
-        <span className="text-green-600 font-semibold">
-          ● Auto Refresh (3s)
-        </span>
       </div>
     </div>
   );

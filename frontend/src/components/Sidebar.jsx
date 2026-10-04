@@ -1,19 +1,16 @@
 import {
   FaShieldAlt,
-  FaChartPie,
+  FaThLarge,
   FaHistory,
   FaBell,
   FaSignOutAlt,
-  FaWifi,
-  FaDatabase,
-  FaBrain,
 } from "react-icons/fa";
 
 function Sidebar({ currentPage, setCurrentPage, onLogout }) {
   const menuItems = [
     {
       title: "Dashboard",
-      icon: <FaChartPie />,
+      icon: <FaThLarge />,
     },
     {
       title: "Prediction History",
@@ -26,120 +23,58 @@ function Sidebar({ currentPage, setCurrentPage, onLogout }) {
   ];
 
   return (
-    <div className="w-72 min-h-screen bg-slate-950 text-white flex flex-col justify-between shadow-2xl">
-
-      {/* Logo */}
-      <div className="p-6 border-b border-slate-800">
-        <div className="flex items-center gap-4">
-
-          <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg">
-            <FaShieldAlt className="text-3xl text-white" />
+    <aside className="w-64 min-h-screen bg-white border-r border-slate-200/80 flex flex-col justify-between p-5 select-none shrink-0">
+      {/* Brand Header */}
+      <div>
+        <div className="flex items-center gap-3 px-2 py-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white text-xl shadow-md shadow-blue-500/20">
+            <FaShieldAlt />
           </div>
-
           <div>
-            <h2 className="font-bold text-xl">CyberShield SOC</h2>
-            <p className="text-slate-400 text-xs">
-              Intrusion Detection System
+            <h1 className="font-extrabold text-xl text-blue-700 tracking-tight leading-tight">
+              CyberShield
+            </h1>
+            <p className="text-slate-400 text-[10px] font-medium leading-tight tracking-tight">
+              AI Intrusion Detection System
             </p>
           </div>
-
         </div>
 
-        {/* Live Status */}
-        <div className="mt-6 space-y-3">
-
-          <div className="flex items-center justify-between bg-slate-900 px-3 py-2 rounded-xl">
-            <div className="flex items-center gap-2">
-              <FaWifi className="text-green-400" />
-              <span className="text-sm">Monitoring</span>
-            </div>
-
-            <span className="text-green-400 text-xs font-bold">
-              LIVE
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between bg-slate-900 px-3 py-2 rounded-xl">
-            <div className="flex items-center gap-2">
-              <FaBrain className="text-cyan-400" />
-              <span className="text-sm">Hybrid Model</span>
-            </div>
-
-            <span className="text-cyan-300 text-xs font-bold">
-              ACTIVE
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between bg-slate-900 px-3 py-2 rounded-xl">
-            <div className="flex items-center gap-2">
-              <FaDatabase className="text-blue-400" />
-              <span className="text-sm">Database</span>
-            </div>
-
-            <span className="text-blue-300 text-xs font-bold">
-              CONNECTED
-            </span>
-          </div>
-
-        </div>
+        {/* Navigation Menu */}
+        <nav className="mt-8 space-y-2">
+          {menuItems.map((item) => {
+            const isActive = currentPage === item.title;
+            return (
+              <button
+                key={item.title}
+                onClick={() => setCurrentPage(item.title)}
+                className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-150 ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/25"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }`}
+              >
+                <span className={`text-base ${isActive ? "text-white" : "text-slate-400"}`}>
+                  {item.icon}
+                </span>
+                <span>{item.title}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* Navigation */}
-      <div className="flex-1 p-5">
-        <p className="text-xs uppercase tracking-widest text-slate-500 mb-4">
-          Navigation
-        </p>
-
-        <div className="space-y-3">
-          {menuItems.map((item) => (
-            <button
-              key={item.title}
-              onClick={() => setCurrentPage(item.title)}
-              className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 ${
-                currentPage === item.title
-                  ? "bg-gradient-to-r from-blue-600 to-cyan-500 shadow-lg text-white"
-                  : "text-slate-300 hover:bg-slate-900 hover:text-white"
-              }`}
-            >
-              <span className="text-xl">{item.icon}</span>
-
-              <span className="font-medium">{item.title}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Threat Info Card */}
-        <div className="mt-10 bg-gradient-to-br from-red-600/20 to-orange-500/20 border border-red-500/30 rounded-2xl p-4">
-          <p className="text-xs text-red-300 uppercase tracking-widest">
-            Threat Intelligence
-          </p>
-
-          <h3 className="text-lg font-bold mt-2 text-white">
-            15 Attack Categories
-          </h3>
-
-          <p className="text-sm text-slate-300 mt-2">
-            DDoS, PortScan, Bot, DoS Hulk, FTP/SSH Patator, Heartbleed,
-            Infiltration and more.
-          </p>
-        </div>
-      </div>
-
-      {/* Logout */}
-      <div className="p-5 border-t border-slate-800">
+      {/* Logout Action */}
+      <div className="pt-4 border-t border-slate-100">
         <button
           onClick={onLogout}
-          className="w-full flex items-center justify-center gap-3 bg-red-600 hover:bg-red-700 py-3 rounded-2xl font-semibold transition"
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 font-semibold text-sm transition"
         >
-          <FaSignOutAlt />
-          Logout
+          <FaSignOutAlt className="text-base" />
+          <span>Logout</span>
         </button>
-
-        <p className="text-center text-slate-500 text-xs mt-4">
-          SOC Dashboard v2.0
-        </p>
       </div>
-    </div>
+    </aside>
   );
 }
 

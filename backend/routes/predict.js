@@ -30,7 +30,25 @@ router.get("/sample", async (req, res) => {
   }
 });
 
-router.post("/", requireAuth, requireWebsiteAccess, async (req, res) => {
+const { getSelfWebsiteId } = require("../services/monitoredWebsiteSync");
+
+const allowLocalOrAuth = (req, res, next) => {
+  const header = req.get("authorization") || "";
+  if (header.startsWith("Bearer ")) {
+    return requireAuth(req, res, () => {
+      requireWebsiteAccess(req, res, next);
+    });
+  }
+  const remoteIp = req.socket.remoteAddress || "";
+  const isLocal = remoteIp.includes("127.0.0.1") || remoteIp === "::1" || remoteIp === "::ffff:127.0.0.1";
+  if (isLocal) {
+    req.websiteId = getSelfWebsiteId();
+    return next();
+  }
+  return requireAuth(req, res, next);
+};
+
+router.post("/", allowLocalOrAuth, async (req, res) => {
   try {
     const inputData = { ...(req.body || {}) };
     delete inputData.website_id;
@@ -59,9 +77,29 @@ router.use(requireAuth, requireWebsiteAccess);
 
 router.get("/stats", async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT COUNT(*) total_predictions, SUM(attack_name = 'BENIGN') benign_predictions, SUM(attack_name <> 'BENIGN') attack_predictions FROM prediction_logs WHERE website_id = ?", [req.websiteId]);
-    const [attackRows] = await db.query("SELECT DISTINCT attack_name FROM prediction_logs WHERE website_id = ? AND attack_name <> 'BENIGN'", [req.websiteId]);
-    return res.json({ success: true, data: { total_predictions: Number(rows[0].total_predictions || 0), benign_predictions: Number(rows[0].benign_predictions || 0), attack_predictions: Number(rows[0].attack_predictions || 0), attack_types: attackRows.length } });
+    const [rows] = await db.query(
+      "SELECT COUNT(*) total_predictions, SUM(attack_name = 'BENIGN') benign_predictions, SUM(attack_name <> 'BENIGN') attack_predictions, COUNT(DISTINCT client_ip) unique_ips FROM prediction_logs WHERE website_id = ?",
+      [req.websiteId]
+    );
+    const [attackRows] = await db.query(
+      "SELECT DISTINCT attack_name FROM prediction_logs WHERE website_id = ? AND attack_name <> 'BENIGN'",
+      [req.websiteId]
+    );
+    const total = Number(rows[0].total_predictions || 0);
+    const benign = Number(rows[0].benign_predictions || 0);
+    const attacks = Number(rows[0].attack_predictions || 0);
+    const uniqueIps = Number(rows[0].unique_ips || 0) || (total > 0 ? 1 : 0);
+
+    return res.json({
+      success: true,
+      data: {
+        total_predictions: total,
+        benign_predictions: benign,
+        attack_predictions: attacks,
+        attack_types: attackRows.length,
+        unique_ips: uniqueIps,
+      },
+    });
   } catch (error) {
     console.error("Stats Error:", error.message);
     return res.status(500).json({ success: false, message: "Failed to fetch prediction statistics" });
@@ -95,6 +133,29 @@ router.get("/alerts", async (req, res) => {
   } catch (error) {
     console.error("Alerts Error:", error.message);
     return res.status(500).json({ success: false, message: "Failed to fetch alerts" });
+  }
+});
+
+router.get("/attacker-ips", async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT client_ip,
+              COUNT(*) AS attack_count,
+              GROUP_CONCAT(DISTINCT attack_name ORDER BY attack_name SEPARATOR ', ') AS attack_types,
+              MAX(severity) AS severity,
+              MAX(created_at) AS last_seen,
+              destination_port
+       FROM prediction_logs
+       WHERE website_id = ? AND attack_name <> 'BENIGN'
+       GROUP BY client_ip, destination_port
+       ORDER BY attack_count DESC, last_seen DESC
+       LIMIT 50`,
+      [req.websiteId]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("Attacker IPs Error:", error.message);
+    return res.status(500).json({ success: false, message: "Failed to fetch attacker IPs" });
   }
 });
 

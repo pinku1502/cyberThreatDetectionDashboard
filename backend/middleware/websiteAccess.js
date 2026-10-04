@@ -6,7 +6,6 @@ const parseWebsiteId = (value) => {
 };
 
 const canAccessWebsite = async (user, websiteId) => {
-  if (user.role === "SUPER_ADMIN") return true;
   const [rows] = await db.execute("SELECT 1 FROM website_memberships WHERE website_id = ? AND user_id = ? LIMIT 1", [websiteId, user.sub]);
   return rows.length > 0;
 };

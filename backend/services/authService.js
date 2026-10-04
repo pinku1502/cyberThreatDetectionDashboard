@@ -1,5 +1,12 @@
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+const path = require("path");
+const fs = require("fs");
+
+const envPath = fs.existsSync(path.resolve(__dirname, "../.env"))
+  ? path.resolve(__dirname, "../.env")
+  : path.resolve(__dirname, "../../.env");
+require("dotenv").config({ path: envPath });
 
 const getJwtSecret = () => {
   if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is required");

@@ -8,7 +8,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Cell,
 } from "recharts";
 
 function AttackBarChart({ websiteId }) {
@@ -17,13 +16,7 @@ function AttackBarChart({ websiteId }) {
   const fetchAttackData = async () => {
     try {
       const response = await API.get("/chart", { params: { website_id: websiteId } });
-
-      // Highest attack count upar dikhane ke liye sorting
-      const sortedData = [...(response.data.data || [])]
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10);
-
-      setAttackData(sortedData);
+      setAttackData(response.data.data || []);
     } catch (error) {
       console.error("Attack Bar Chart Error:", error);
     }
@@ -32,90 +25,75 @@ function AttackBarChart({ websiteId }) {
   useEffect(() => {
     fetchAttackData();
     const interval = setInterval(fetchAttackData, 3000);
-
     return () => clearInterval(interval);
   }, [websiteId]);
 
-  const attackColors = {
-    BENIGN: "#22C55E",
-    DDoS: "#DC2626",
-    "DoS Hulk": "#EA580C",
-    "DoS GoldenEye": "#F97316",
-    "DoS Slowloris": "#FB923C",
-    "DoS Slowhttptest": "#FDBA74",
-    PortScan: "#2563EB",
-    Bot: "#7C3AED",
-    "FTP-Patator": "#EAB308",
-    "SSH-Patator": "#06B6D4",
-    Heartbleed: "#991B1B",
-    Infiltration: "#EC4899",
-    "Web Attack Brute Force": "#14B8A6",
-    "Web Attack SQL Injection": "#0D9488",
-    "Web Attack XSS": "#6366F1",
-  };
+  const totalCount = attackData.reduce((acc, curr) => acc + Number(curr.count || 0), 0);
+
+  const displayData =
+    attackData.length > 0 ? attackData : [{ attack_name: "BENIGN", count: 0 }];
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 flex flex-col justify-between">
       {/* Header */}
-      <div className="flex justify-between items-center mb-5">
+      <div className="flex items-start justify-between mb-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">
-            Top Detected Attack Types
+          <h2 className="text-base font-bold text-slate-800">
+            Attack Count Analysis
           </h2>
-
-          <p className="text-sm text-gray-500">
-            Highest detected cyber attacks from live network traffic.
+          <p className="text-xs text-slate-400 mt-0.5">
+            Number of predictions detected for each attack category.
           </p>
         </div>
 
-        <span className="bg-red-100 text-red-700 px-3 py-2 rounded-full text-xs font-bold">
-          LIVE THREAT ANALYSIS
+        <span className="bg-blue-50 text-blue-600 text-xs font-semibold px-2.5 py-1 rounded-lg border border-blue-100">
+          Total: {totalCount}
         </span>
       </div>
 
-      {/* Chart */}
-      <div className="h-[360px]">
+      {/* Bar Chart */}
+      <div className="h-[280px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={attackData}
-            layout="vertical"
-            margin={{ top: 10, right: 25, left: 30, bottom: 10 }}
+            data={displayData}
+            margin={{ top: 15, right: 15, left: -10, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
 
-            <XAxis type="number" stroke="#64748B" />
+            <XAxis
+              dataKey="attack_name"
+              stroke="#94A3B8"
+              tick={{ fontSize: 11, fill: "#64748B", fontWeight: 500 }}
+              tickLine={false}
+              axisLine={{ stroke: "#CBD5E1" }}
+            />
 
             <YAxis
-              type="category"
-              dataKey="attack_name"
-              width={120}
-              stroke="#334155"
-              tick={{ fontSize: 12 }}
+              stroke="#94A3B8"
+              tick={{ fontSize: 11, fill: "#64748B" }}
+              tickLine={false}
+              axisLine={false}
+              allowDecimals={false}
             />
 
             <Tooltip
-              formatter={(value) => [`${value} Packets`, "Detected"]}
+              formatter={(value) => [`${value} Logs`, "Predictions"]}
+              contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0" }}
             />
 
-            <Bar dataKey="count" radius={[0, 8, 8, 0]}>
-              {attackData.map((entry, index) => (
-                <Cell
-                  key={index}
-                  fill={attackColors[entry.attack_name] || "#64748B"}
-                />
-              ))}
-            </Bar>
+            <Bar
+              dataKey="count"
+              fill="#2563EB"
+              radius={[6, 6, 0, 0]}
+              maxBarSize={60}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
       {/* Footer */}
-      <div className="flex justify-between items-center border-t pt-4 mt-4 text-sm text-gray-500">
-        <span>Top 10 Attack Categories</span>
-
-        <span className="text-red-600 font-semibold">
-          ● Updated Every 3 Seconds
-        </span>
+      <div className="mt-2 text-[11px] text-slate-400 font-medium">
+        Source: MySQL Prediction Logs
       </div>
     </div>
   );

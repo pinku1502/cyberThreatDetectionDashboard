@@ -1,69 +1,47 @@
-import { useState } from "react";
-import { ROOT_API } from "../api/api";
+import RunPredictionButton from "./RunPredictionButton";
 
-export default function WebsiteSelector({ websites, selectedWebsite, onSelect, user, onCreated }) {
-  const [name, setName] = useState("");
-  const [baseUrl, setBaseUrl] = useState("");
-  const [confirmed, setConfirmed] = useState(false);
-  const [message, setMessage] = useState("");
-  const [token, setToken] = useState("");
-
-  const createWebsite = async (event) => {
-    event.preventDefault();
-    setMessage("");
-    setToken("");
-    try {
-      const response = await ROOT_API.post("/websites", {
-        name,
-        base_url: baseUrl,
-        authorization_confirmed: confirmed,
-      });
-      setMessage("Website registered. Generate an ingest token from the site management page.");
-      setName("");
-      setBaseUrl("");
-      setConfirmed(false);
-      onCreated(response.data.website_id);
-    } catch (error) {
-      setMessage(error.response?.data?.message || "Could not register website.");
-    }
-  };
-
-  const generateToken = async () => {
-    if (!selectedWebsite) return;
-    try {
-      const response = await ROOT_API.post("/websites/" + selectedWebsite.id + "/tokens", { label: "security-agent" });
-      setToken(response.data.token);
-    } catch (error) {
-      setMessage(error.response?.data?.message || "Could not create ingest token.");
-    }
-  };
+export default function WebsiteSelector({ websites, selectedWebsite, onSelect }) {
+  const hasMultiple = websites.length > 1;
 
   return (
-    <section className="mb-6 rounded-3xl border border-blue-100 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <label className="flex-1 text-sm font-semibold text-slate-700">
-          Authorized website
-          <select value={selectedWebsite?.id || ""} onChange={(event) => onSelect(Number(event.target.value))} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3">
-            {websites.length === 0 && <option value="">No assigned websites</option>}
-            {websites.map((website) => <option key={website.id} value={website.id}>{website.name} — {website.base_url}</option>)}
-          </select>
-        </label>
-        {selectedWebsite && (user.role === "SUPER_ADMIN" || selectedWebsite.role === "SITE_ADMIN") && (
-          <button onClick={generateToken} className="rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white">Generate ingest token</button>
+    <div className="bg-white rounded-2xl border border-slate-200/80 px-6 py-4 shadow-sm mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Left: Heading and Website Indicator / Dropdown */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <h2 className="text-2xl font-bold text-blue-700 tracking-tight">
+          Cyber Threat Detection Dashboard
+        </h2>
+
+        {selectedWebsite && (
+          <div className="flex items-center gap-2">
+            {hasMultiple ? (
+              <select
+                value={selectedWebsite.id}
+                onChange={(e) => onSelect(Number(e.target.value))}
+                aria-label="Select Monitored Website"
+                className="bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200 cursor-pointer"
+              >
+                {websites.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.name} ({site.base_url})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="bg-blue-50 text-blue-700 border border-blue-100 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Monitoring: {selectedWebsite.name} ({selectedWebsite.base_url})
+              </span>
+            )}
+          </div>
         )}
       </div>
 
-      {user.role === "SUPER_ADMIN" && (
-        <form onSubmit={createWebsite} className="mt-5 grid gap-3 border-t border-slate-100 pt-5 md:grid-cols-4">
-          <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Website name" required className="rounded-xl border px-3 py-3" />
-          <input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://example.com" type="url" required className="rounded-xl border px-3 py-3" />
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} required /> I am authorized to monitor it</label>
-          <button className="rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white">Add authorized website</button>
-        </form>
+      {/* Right: Run Prediction Button */}
+      {selectedWebsite && (
+        <div className="shrink-0">
+          <RunPredictionButton websiteId={selectedWebsite.id} />
+        </div>
       )}
-
-      {message && <p className="mt-3 text-sm text-slate-600">{message}</p>}
-      {token && <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">Copy this token into the website agent environment now: <code className="break-all">{token}</code></div>}
-    </section>
+    </div>
   );
 }

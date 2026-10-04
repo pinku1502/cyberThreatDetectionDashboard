@@ -1,116 +1,75 @@
 import { useState } from "react";
 import API from "../api/api";
-import { FaBug, FaPlay, FaSpinner } from "react-icons/fa";
+import { FaPlay, FaSpinner, FaCheckCircle, FaExclamationTriangle } from "react-icons/fa";
 
-const ATTACK_OPTIONS = [
-  "DDoS",
-  "DoS Hulk",
-  "DoS GoldenEye",
-  "DoS Slowhttptest",
-  "DoS slowloris",
-  "PortScan",
-  "Bot",
-  "FTP-Patator",
-  "SSH-Patator",
-  "Heartbleed",
-  "Infiltration",
-  "Web Attack Brute Force",
-  "Web Attack SQL Injection",
-  "Web Attack XSS",
-];
-
-const severityStyles = {
-  Critical: "border-red-300 bg-red-50 text-red-800",
-  High: "border-orange-300 bg-orange-50 text-orange-800",
-  Medium: "border-yellow-300 bg-yellow-50 text-yellow-800",
-  Low: "border-green-300 bg-green-50 text-green-800",
-};
-
-export default function RunPredictionButton({ websiteId }) {
-  const [selectedAttack, setSelectedAttack] = useState("DDoS");
+export default function RunPredictionButton({ websiteId, onPredictionSuccess }) {
   const [loading, setLoading] = useState(false);
-  const [prediction, setPrediction] = useState(null);
-  const [error, setError] = useState("");
+  const [toast, setToast] = useState(null);
 
   const runPrediction = async () => {
+    if (loading) return;
     setLoading(true);
-    setError("");
+    setToast(null);
 
     try {
+      // Pick a sample or benign prediction to test
       const sampleResponse = await API.get("/sample", {
-        params: { attack: selectedAttack },
+        params: { attack: "BENIGN" },
+      }).catch(async () => {
+        // Fallback to DDoS sample if BENIGN sample route differs
+        return await API.get("/sample", { params: { attack: "DDoS" } });
       });
 
-      const response = await API.post("/", { ...sampleResponse.data.data.features, website_id: websiteId });
-      setPrediction(response.data.data);
+      const features = sampleResponse.data?.data?.features || {};
+      const response = await API.post("/", { ...features, website_id: websiteId });
+      const pred = response.data?.data;
+
+      setToast({
+        type: "success",
+        message: `Prediction recorded: ${pred?.attack_name || "BENIGN"} (${((pred?.confidence || 0.99) * 100).toFixed(0)}% confidence)`,
+      });
+
+      if (onPredictionSuccess) onPredictionSuccess(pred);
+
+      setTimeout(() => setToast(null), 4000);
     } catch (requestError) {
-      console.error("Attack simulation failed:", requestError);
-      setPrediction(null);
-      setError(
-        requestError.response?.data?.message ||
-          "Could not run the selected attack simulation."
-      );
+      console.error("Prediction run error:", requestError);
+      setToast({
+        type: "error",
+        message: requestError.response?.data?.message || "Failed to execute prediction.",
+      });
+      setTimeout(() => setToast(null), 4000);
     } finally {
       setLoading(false);
     }
   };
 
-  const severity = prediction?.severity || "Low";
-
   return (
-    <div className="flex flex-col items-center gap-3 w-full max-w-sm">
-      <div className="flex items-center gap-2 w-full">
-        <select
-          value={selectedAttack}
-          onChange={(event) => setSelectedAttack(event.target.value)}
-          disabled={loading}
-          aria-label="Attack simulation type"
-          className="flex-1 rounded-xl border border-blue-200 bg-white px-3 py-3 text-sm font-semibold text-slate-800"
-        >
-          {ATTACK_OPTIONS.map((attack) => (
-            <option key={attack} value={attack}>
-              Simulate {attack}
-            </option>
-          ))}
-        </select>
+    <div className="relative inline-flex items-center">
+      <button
+        onClick={runPrediction}
+        disabled={loading}
+        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm px-6 py-2.5 rounded-xl shadow-sm transition disabled:opacity-75 disabled:cursor-not-allowed"
+      >
+        {loading ? <FaSpinner className="animate-spin text-sm" /> : <FaPlay className="text-xs" />}
+        <span>{loading ? "Processing..." : "Run Prediction"}</span>
+      </button>
 
-        <button
-          onClick={runPrediction}
-          disabled={loading}
-          className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {loading ? <FaSpinner className="animate-spin" /> : <FaPlay />}
-          {loading ? "Detecting" : "Run"}
-        </button>
-      </div>
-
-      <p className="text-center text-xs text-blue-100">
-        Safe simulation using a labeled CICIDS2017 flow. No real attack traffic
-        is generated.
-      </p>
-
-      {error && (
-        <div className="w-full rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
-        </div>
-      )}
-
-      {prediction && (
+      {/* Floating Status Notification */}
+      {toast && (
         <div
-          className={["w-full rounded-xl border px-4 py-3 text-left", severityStyles[severity] || severityStyles.Low].join(" ")}
+          className={`absolute right-0 top-12 z-50 whitespace-nowrap rounded-xl px-4 py-2.5 text-xs font-semibold shadow-lg border flex items-center gap-2 ${
+            toast.type === "success"
+              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+              : "bg-rose-50 text-rose-800 border-rose-200"
+          }`}
         >
-          <div className="flex items-center justify-between gap-3">
-            <span className="flex items-center gap-2 font-bold">
-              <FaBug />
-              Detected: {prediction.attack_name}
-            </span>
-            <span className="rounded-full bg-white/70 px-2 py-1 text-xs font-bold">
-              {severity}
-            </span>
-          </div>
-          <p className="mt-1 text-sm">
-            Confidence: {(Number(prediction.confidence) * 100).toFixed(2)}%
-          </p>
+          {toast.type === "success" ? (
+            <FaCheckCircle className="text-emerald-600" />
+          ) : (
+            <FaExclamationTriangle className="text-rose-600" />
+          )}
+          <span>{toast.message}</span>
         </div>
       )}
     </div>

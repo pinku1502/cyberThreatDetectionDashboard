@@ -8,9 +8,8 @@ import AttackBarChart from "./components/AttackBarChart";
 import PredictionTable from "./components/PredictionTable";
 import PredictionDetails from "./components/PredictionDetails";
 import AlertsPage from "./components/AlertsPage";
-import RunPredictionButton from "./components/RunPredictionButton";
 import WebsiteSelector from "./components/WebsiteSelector";
-import TeamManagement from "./components/TeamManagement";
+import AttackerIpTracker from "./components/AttackerIpTracker";
 import { ROOT_API } from "./api/api";
 
 function App() {
@@ -22,20 +21,26 @@ function App() {
   const [websiteId, setWebsiteId] = useState(null);
 
   const loadWebsites = async (preferredId) => {
-    const response = await ROOT_API.get("/websites");
-    const list = response.data.data || [];
-    setWebsites(list);
-    const nextId = preferredId || Number(localStorage.getItem("selectedWebsiteId")) || list[0]?.id || null;
-    setWebsiteId(nextId);
-    if (nextId) localStorage.setItem("selectedWebsiteId", String(nextId));
+    try {
+      const response = await ROOT_API.get("/websites");
+      const list = response.data.data || [];
+      setWebsites(list);
+      const nextId = preferredId || list[0]?.id || null;
+      setWebsiteId(nextId);
+      if (nextId) localStorage.setItem("selectedWebsiteId", String(nextId));
+    } catch (err) {
+      console.error("Error loading websites:", err);
+    }
   };
 
   useEffect(() => {
     if (!isLoggedIn) return;
-    ROOT_API.get("/auth/me").then((response) => {
-      setUser(response.data.user);
-      return loadWebsites();
-    }).catch(() => handleLogout());
+    ROOT_API.get("/auth/me")
+      .then((response) => {
+        setUser(response.data.user);
+        return loadWebsites();
+      })
+      .catch(() => handleLogout());
   }, [isLoggedIn]);
 
   const handleLogin = (loggedInUser, token) => {
@@ -60,32 +65,80 @@ function App() {
   };
 
   if (!isLoggedIn || !user) return <Login onLogin={handleLogin} />;
-  const selectedWebsite = websites.find((website) => Number(website.id) === Number(websiteId));
+
+  const selectedWebsite = websites.find((website) => Number(website.id) === Number(websiteId)) || websites[0];
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
-      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} onLogout={handleLogout} />
-      <div className="flex-1 overflow-y-auto p-6">
-        <Navbar currentUser={user.name || user.email} role={user.role} />
-        <WebsiteSelector websites={websites} selectedWebsite={selectedWebsite} onSelect={selectWebsite} user={user} onCreated={loadWebsites} />
+    <div className="flex min-h-screen bg-[#f4f7fb] text-slate-800 font-sans">
+      {/* Left Sidebar */}
+      <Sidebar
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        onLogout={handleLogout}
+      />
+
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+        {/* Top Bar with Badges and User Profile */}
+        <Navbar
+          currentUser={user.name || user.email}
+          onBellClick={() => setCurrentPage("Alerts")}
+        />
+
+        {/* Action Row: Title, Website Indicator, Run Prediction Button */}
+        <WebsiteSelector
+          websites={websites}
+          selectedWebsite={selectedWebsite}
+          onSelect={selectWebsite}
+        />
+
+        {/* No Website Fallback */}
         {!selectedWebsite ? (
-          <div className="rounded-3xl bg-white p-10 text-center text-slate-500">No authorized website is assigned to this account.</div>
+          <div className="rounded-2xl bg-white p-12 text-center text-slate-400 border border-slate-200">
+            No website is assigned to this account. Contact developer to configure your website.
+          </div>
         ) : (
           <>
-            <div className="mb-8 rounded-3xl bg-gradient-to-r from-slate-900 via-blue-900 to-cyan-700 p-8 text-white shadow-xl">
-              <p className="text-xs font-bold uppercase tracking-[4px] text-cyan-300">Security Operations Center</p>
-              <h1 className="mt-3 text-4xl font-extrabold">Monitoring {selectedWebsite.name}</h1>
-              <p className="mt-2 text-blue-100">{selectedWebsite.base_url} · {user.role}</p>
-              <div className="mt-6"><RunPredictionButton websiteId={websiteId} /></div>
-            </div>
-            {currentPage === "Dashboard" && <><SummaryCards websiteId={websiteId} /><div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-2"><AttackPieChart websiteId={websiteId} /><AttackBarChart websiteId={websiteId} /></div><div className="mt-8"><AlertsPage websiteId={websiteId} preview /></div></>}
-            {currentPage === "Prediction History" && <PredictionTable websiteId={websiteId} setSelectedPrediction={setSelectedPrediction} />}
-            {currentPage === "Alerts" && <AlertsPage websiteId={websiteId} />}
-            {(user.role === "SUPER_ADMIN" || selectedWebsite.role === "SITE_ADMIN") && <TeamManagement websiteId={websiteId} user={user} />}
+            {/* Dashboard View */}
+            {currentPage === "Dashboard" && (
+              <>
+                {/* 4 Metrics Summary Cards */}
+                <SummaryCards websiteId={selectedWebsite.id} />
+
+                {/* 2 Charts Side-by-Side */}
+                <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <AttackPieChart websiteId={selectedWebsite.id} />
+                  <AttackBarChart websiteId={selectedWebsite.id} />
+                </div>
+
+                {/* Live Attacker IP Tracker Table */}
+                <AttackerIpTracker websiteId={selectedWebsite.id} />
+              </>
+            )}
+
+            {/* Prediction History Page */}
+            {currentPage === "Prediction History" && (
+              <PredictionTable
+                websiteId={selectedWebsite.id}
+                setSelectedPrediction={setSelectedPrediction}
+              />
+            )}
+
+            {/* Alerts Page */}
+            {currentPage === "Alerts" && (
+              <AlertsPage websiteId={selectedWebsite.id} />
+            )}
           </>
         )}
-      </div>
-      {selectedPrediction && <PredictionDetails prediction={selectedPrediction} onClose={() => setSelectedPrediction(null)} />}
+      </main>
+
+      {/* Prediction Details Modal */}
+      {selectedPrediction && (
+        <PredictionDetails
+          prediction={selectedPrediction}
+          onClose={() => setSelectedPrediction(null)}
+        />
+      )}
     </div>
   );
 }

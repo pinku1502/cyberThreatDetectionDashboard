@@ -18,22 +18,93 @@ const canManageWebsite = async (user, websiteId) => {
 };
 
 const canViewWebsite = async (user, websiteId) => {
-  if (user.role === "SUPER_ADMIN") return true;
-  const [rows] = await db.execute(
-    "SELECT 1 FROM website_memberships WHERE website_id = ? AND user_id = ? LIMIT 1",
-    [websiteId, user.sub]
-  );
-  return rows.length > 0;
+  return true; // All developer-configured monitored websites are visible to logged-in users
 };
+
+// Real-time telemetry ingest endpoint for monitored websites (e.g. NexaoraNotes)
+router.post("/ingest-event", async (req, res) => {
+  const {
+    website_code,
+    website_id: rawWebsiteId,
+    attack_name = "BENIGN",
+    prediction = 0,
+    confidence = 0.98,
+    severity = "Low",
+    client_ip,
+    clientIp,
+    destination_port = 8000,
+    endpoint = "/",
+    method = "GET",
+    details = {},
+  } = req.body || {};
+
+  let websiteId = Number(rawWebsiteId);
+
+  try {
+    if (!websiteId && website_code) {
+      const [rows] = await db.query(
+        "SELECT id FROM monitored_websites WHERE code = ? OR name LIKE ? LIMIT 1",
+        [website_code, `%${website_code}%`]
+      );
+      if (rows.length > 0) websiteId = rows[0].id;
+    }
+
+    if (!websiteId) {
+      return res.status(400).json({ success: false, message: "Valid website_id or website_code required" });
+    }
+
+    let cleanIp = String(client_ip || clientIp || "127.0.0.1").trim();
+    if (cleanIp.startsWith("::ffff:")) cleanIp = cleanIp.replace(/^::ffff:/, "");
+    if (cleanIp === "::1") cleanIp = "127.0.0.1";
+
+    // 1. Insert into prediction_logs
+    const [result] = await db.query(
+      "INSERT INTO prediction_logs (website_id, attack_name, prediction, confidence, client_ip, destination_port, severity) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [websiteId, attack_name, prediction, confidence, cleanIp, destination_port, severity]
+    );
+
+    // 2. If it's an attack, record into security_alerts
+    if (attack_name && attack_name !== "BENIGN") {
+      await db.query(
+        "INSERT INTO security_alerts (website_id, alert_type, severity, title, details, status) VALUES (?, ?, ?, ?, ?, 'OPEN')",
+        [
+          websiteId,
+          attack_name,
+          String(severity).toUpperCase(),
+          `Intrusion Detected: ${attack_name} on ${endpoint}`,
+          JSON.stringify({ endpoint, method, client_ip: cleanIp, log_id: result.insertId, ...details }),
+        ]
+      );
+      console.log(`🚨 [NEXAORANOTES INTRUSION] ${attack_name} from ${cleanIp} on ${method} ${endpoint}`);
+    } else {
+      console.log(`📡 [NEXAORANOTES TRAFFIC] BENIGN from ${cleanIp} on ${method} ${endpoint}`);
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Event logged successfully",
+      id: result.insertId,
+      website_id: websiteId,
+      attack_name,
+    });
+  } catch (error) {
+    console.error("Ingest event error:", error.message);
+    return res.status(500).json({ success: false, message: "Could not log event" });
+  }
+});
 
 router.use(requireAuth);
 
 router.get("/", async (req, res) => {
   try {
-    const query = req.user.role === "SUPER_ADMIN"
-      ? "SELECT id, name, base_url, authorization_confirmed, status, created_at FROM monitored_websites ORDER BY name"
-      : "SELECT w.id, w.name, w.base_url, w.authorization_confirmed, w.status, m.role FROM monitored_websites w JOIN website_memberships m ON m.website_id = w.id WHERE m.user_id = ? ORDER BY w.name";
-    const [rows] = await db.execute(query, req.user.role === "SUPER_ADMIN" ? [] : [req.user.sub]);
+    const [rows] = await db.execute(
+      "SELECT w.id, w.name, w.base_url, w.is_self, w.code, w.description, w.status " +
+      "FROM monitored_websites w " +
+      "JOIN website_memberships m ON m.website_id = w.id " +
+      "WHERE m.user_id = ? " +
+      "ORDER BY w.id ASC",
+      [req.user.sub]
+    );
     return res.json({ success: true, data: rows });
   } catch (error) {
     console.error("Website list error:", error.message);
@@ -41,30 +112,11 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", requireRoles("SUPER_ADMIN"), async (req, res) => {
-  const { name, base_url: baseUrl, authorization_confirmed: confirmed } = req.body || {};
-  let parsedUrl;
-
-  try {
-    parsedUrl = new URL(baseUrl);
-  } catch {
-    return res.status(400).json({ success: false, message: "A valid website URL is required" });
-  }
-
-  if (!name || !["http:", "https:"].includes(parsedUrl.protocol) || confirmed !== true) {
-    return res.status(400).json({ success: false, message: "Name, HTTP(S) URL, and authorization confirmation are required" });
-  }
-
-  try {
-    const [result] = await db.execute(
-      "INSERT INTO monitored_websites (name, base_url, authorization_confirmed, created_by) VALUES (?, ?, 1, ?)",
-      [name.trim(), parsedUrl.toString(), req.user.sub]
-    );
-    return res.status(201).json({ success: true, website_id: result.insertId });
-  } catch (error) {
-    console.error("Website create error:", error.message);
-    return res.status(500).json({ success: false, message: "Could not create website" });
-  }
+router.post("/", async (req, res) => {
+  return res.status(403).json({
+    success: false,
+    message: "Websites cannot be added from the dashboard. Monitored websites are configured by the developer in the code (backend/config/monitoredWebsites.js).",
+  });
 });
 
 router.post("/:websiteId/members", async (req, res) => {

@@ -17,7 +17,7 @@ function Login({ onLogin }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [_loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -35,7 +35,7 @@ function Login({ onLogin }) {
     } catch (requestError) {
       setError(
         requestError.response?.data?.message ||
-          "Unable to sign in. Contact your administrator."
+          "Unable to sign in. Please verify your credentials."
       );
     } finally {
       setLoading(false);
@@ -43,237 +43,165 @@ function Login({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center p-6 overflow-hidden relative">
-
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center p-6 overflow-hidden relative font-sans">
       {/* Background Glow */}
       <div className="absolute w-96 h-96 bg-blue-600/20 blur-[120px] rounded-full -top-20 -left-20"></div>
       <div className="absolute w-80 h-80 bg-cyan-500/20 blur-[120px] rounded-full bottom-0 right-0"></div>
 
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="h-full w-full bg-[linear-gradient(to_right,#2563eb22_1px,transparent_1px),linear-gradient(to_bottom,#2563eb22_1px,transparent_1px)] bg-[size:40px_40px]" />
-      </div>
-
-      <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
-
+      <div className="relative z-10 w-full max-w-5xl grid lg:grid-cols-2 gap-8 items-center">
         {/* LEFT PANEL */}
         <div className="hidden lg:flex flex-col justify-center text-white p-6">
-
-          <div className="w-24 h-24 rounded-full bg-blue-600 flex items-center justify-center shadow-2xl mb-8">
-            <FaShieldAlt className="text-5xl" />
+          <div className="w-20 h-20 rounded-2xl bg-blue-600 flex items-center justify-center shadow-2xl mb-8 shadow-blue-500/30">
+            <FaShieldAlt className="text-4xl text-white" />
           </div>
 
-          <p className="uppercase tracking-[5px] text-cyan-300 text-sm font-semibold mb-3">
-            Security Operations Center
+          <p className="uppercase tracking-[4px] text-cyan-300 text-xs font-bold mb-2">
+            CyberShield SOC Portal
           </p>
 
-          <h1 className="text-5xl font-extrabold leading-tight">
+          <h1 className="text-4xl font-extrabold leading-tight">
             Cyber Threat Detection Dashboard
           </h1>
 
-          <p className="mt-5 text-blue-100 text-lg leading-8">
-            AI Powered Network Intrusion Detection using
-            <br />
-            Random Forest, XGBoost & Hybrid Classifier.
+          <p className="mt-4 text-blue-100 text-base leading-relaxed">
+            Website Cyber Threat Monitoring & AI Intrusion Detection.
+            Log in to monitor your website's real-time security telemetry.
           </p>
 
-          <div className="mt-8 space-y-4">
-
+          <div className="mt-8 space-y-3.5 text-sm">
             <div className="flex items-center gap-3">
-              <span className="w-3 h-3 rounded-full bg-green-400 animate-pulse"></span>
-              <span>Real-Time Threat Monitoring</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Real-Time Website Intrusion Detection</span>
             </div>
 
             <div className="flex items-center gap-3">
               <FaBrain className="text-cyan-300" />
-              <span>15 Multi-Class Attack Detection</span>
+              <span>Hybrid Classifier & Attack Analytics</span>
             </div>
 
             <div className="flex items-center gap-3">
-              <FaDatabase className="text-green-300" />
-              <span>CICIDS2017 Network Dataset</span>
+              <FaDatabase className="text-emerald-300" />
+              <span>Per-Website Prediction Logs & Telemetry</span>
             </div>
 
             <div className="flex items-center gap-3">
-              <FaWifi className="text-orange-300" />
-              <span>Hybrid AI Detection Engine Active</span>
-            </div>
-
-          </div>
-
-          <div className="mt-10 bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/10">
-            <p className="text-cyan-300 text-sm font-semibold mb-3">
-              ACTIVE SECURITY MODULES
-            </p>
-
-            <div className="space-y-3 text-sm">
-
-              <div className="flex justify-between">
-                <span>Random Forest Model</span>
-                <span className="text-green-300">ONLINE</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span>XGBoost Model</span>
-                <span className="text-green-300">ONLINE</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span>Hybrid Classifier</span>
-                <span className="text-green-300">READY</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span>Threat Monitoring</span>
-                <span className="text-green-300">LIVE</span>
-              </div>
-
+              <FaWifi className="text-amber-300" />
+              <span>Real-time DDoS, SQLi, and Bot Detection</span>
             </div>
           </div>
-
         </div>
 
-        {/* RIGHT PANEL */}
-        <div className="bg-white/95 backdrop-blur-xl rounded-[32px] shadow-2xl border border-white/20 p-8">
-
-          {/* Mobile Logo */}
-          <div className="lg:hidden flex justify-center mb-6">
-            <div className="bg-blue-600 text-white p-5 rounded-full text-4xl shadow-xl">
-              <FaShieldAlt />
-            </div>
-          </div>
-
+        {/* RIGHT PANEL: LOGIN CARD */}
+        <div className="bg-white/95 backdrop-blur-xl rounded-[28px] shadow-2xl border border-white/20 p-8">
           <div className="text-center lg:text-left">
-
             <span className="text-blue-700 font-bold uppercase text-xs tracking-[3px]">
-              Secure Authentication Portal
+              Website Owner Login
             </span>
 
-            <h2 className="text-4xl font-bold text-slate-800 mt-2">
-              Welcome Back
+            <h2 className="text-3xl font-extrabold text-slate-800 mt-2">
+              Sign In to Monitor
             </h2>
 
-            <p className="text-gray-500 mt-2">
-              Login to access the Cyber Threat Detection Dashboard.
+            <p className="text-slate-500 text-xs mt-1.5">
+              Enter your website owner credentials to access your dashboard.
             </p>
-
           </div>
 
           {/* Login Form */}
-          <form onSubmit={handleLogin} className="mt-8 space-y-6">
-
-            {/* Email */}
+          <form onSubmit={handleLogin} className="mt-6 space-y-4">
             <div>
-              <label className="text-sm font-semibold text-slate-700">
+              <label className="text-xs font-semibold text-slate-700">
                 Email address
               </label>
 
-              <div className="flex items-center bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 mt-2 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-200 transition">
-                <FaUser className="text-blue-600 mr-3 text-lg" />
-
+              <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 mt-1.5 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 transition">
+                <FaUser className="text-blue-600 mr-3 text-sm" />
                 <input
                   type="email"
-                  placeholder="admin@cyberthreat.local"
+                  placeholder="nexaoranotes@gmail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full outline-none bg-transparent text-slate-800"
+                  required
+                  className="w-full outline-none bg-transparent text-slate-800 text-sm"
                 />
               </div>
             </div>
 
-            {/* Password */}
             <div>
-              <label className="text-sm font-semibold text-slate-700">
+              <label className="text-xs font-semibold text-slate-700">
                 Password
               </label>
 
-              <div className="flex items-center bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 mt-2 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-200 transition">
-                <FaLock className="text-blue-600 mr-3 text-lg" />
-
+              <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 mt-1.5 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 transition">
+                <FaLock className="text-blue-600 mr-3 text-sm" />
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Admin@123456"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full outline-none bg-transparent text-slate-800"
+                  required
+                  className="w-full outline-none bg-transparent text-slate-800 text-sm"
                 />
 
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-slate-500 hover:text-blue-600 transition"
+                  className="text-slate-400 hover:text-blue-600 transition"
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </div>
             </div>
 
-            {/* Login Button */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition-all duration-300 hover:scale-[1.02]"
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white py-3.5 rounded-xl font-bold text-sm shadow-md shadow-blue-500/25 transition disabled:opacity-75"
             >
-              Secure Login →
+              {loading ? "Signing in..." : "Access Website Dashboard →"}
             </button>
-
           </form>
 
           {error && (
-            <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>
+            <p className="mt-3 rounded-xl bg-red-50 p-3 text-xs text-red-700 font-medium border border-red-200">
+              {error}
+            </p>
           )}
 
-          {/* Demo Credentials */}
-          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-2xl p-4">
-            <h3 className="text-blue-700 font-bold text-sm mb-2">
-              Demo Credentials
+          {/* Quick Demo Logins for Website Owners */}
+          <div className="mt-6 bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+            <h3 className="text-blue-700 font-bold text-xs uppercase tracking-wider mb-2">
+              Website Owner Quick Logins
             </h3>
 
-            <p className="text-sm text-slate-700">
-              Email: <span className="font-semibold">admin@cyberthreat.local</span>
-            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail("nexaoranotes@gmail.com");
+                  setPassword("password123");
+                }}
+                className="text-left bg-white p-3 rounded-xl border border-blue-200 hover:border-blue-500 hover:shadow-sm transition"
+              >
+                <p className="font-bold text-xs text-blue-700">NexaoraNotes Owner</p>
+                <p className="text-[11px] text-slate-600 mt-0.5 truncate">nexaoranotes@gmail.com</p>
+                <p className="text-[10px] text-slate-400">Pass: password123</p>
+              </button>
 
-            <p className="text-sm text-slate-700">
-              Password: <span className="font-semibold">Admin@123456</span>
-            </p>
-          </div>
-
-          {/* Security Status */}
-          <div className="mt-6 bg-slate-50 rounded-2xl border border-slate-200 p-5">
-
-            <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <FaShieldAlt className="text-green-600" />
-              Security System Status
-            </h3>
-
-            <div className="space-y-3">
-
-              {[
-                "Random Forest Model Loaded",
-                "XGBoost Model Loaded",
-                "Hybrid Classifier Active",
-                "MySQL Database Connected",
-                "Real-Time Threat Monitoring Enabled",
-              ].map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm text-slate-700">{item}</span>
-
-                  <span className="flex items-center gap-1 text-green-600 font-semibold text-xs">
-                    <FaCheckCircle />
-                    ACTIVE
-                  </span>
-                </div>
-              ))}
-
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail("admin@cybershield.com");
+                  setPassword("Admin@123456");
+                }}
+                className="text-left bg-white p-3 rounded-xl border border-slate-200 hover:border-blue-500 hover:shadow-sm transition"
+              >
+                <p className="font-bold text-xs text-slate-800">CyberShield Platform</p>
+                <p className="text-[11px] text-slate-600 mt-0.5 truncate">admin@cybershield.com</p>
+                <p className="text-[10px] text-slate-400">Pass: Admin@123456</p>
+              </button>
             </div>
           </div>
-
-          {/* Footer */}
-          <div className="mt-6 text-center text-xs text-slate-500">
-            Cyber Threat Detection Dashboard v2.0
-            <br />
-            Random Forest • XGBoost • Hybrid Classifier • CICIDS2017
-          </div>
-
         </div>
       </div>
     </div>
