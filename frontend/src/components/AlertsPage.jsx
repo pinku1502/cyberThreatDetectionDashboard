@@ -7,12 +7,12 @@ import {
   FaBroadcastTower,
 } from "react-icons/fa";
 
-function AlertsPage({ preview = false }) {
+function AlertsPage({ websiteId, preview = false }) {
   const [alerts, setAlerts] = useState([]);
 
   const fetchAlerts = async () => {
     try {
-      const response = await API.get("/history");
+      const response = await API.get("/history", { params: { website_id: websiteId } });
 
       const logs = response.data.data || [];
 
@@ -32,7 +32,7 @@ function AlertsPage({ preview = false }) {
 
     const interval = setInterval(fetchAlerts, 3000);
     return () => clearInterval(interval);
-  }, [preview]);
+  }, [preview, websiteId]);
 
   const getSeverity = (attack) => {
     if (["DDoS", "Heartbleed"].includes(attack)) return "Critical";

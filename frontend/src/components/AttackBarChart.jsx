@@ -11,12 +11,12 @@ import {
   Cell,
 } from "recharts";
 
-function AttackBarChart() {
+function AttackBarChart({ websiteId }) {
   const [attackData, setAttackData] = useState([]);
 
   const fetchAttackData = async () => {
     try {
-      const response = await API.get("/chart");
+      const response = await API.get("/chart", { params: { website_id: websiteId } });
 
       // Highest attack count upar dikhane ke liye sorting
       const sortedData = [...(response.data.data || [])]
@@ -34,7 +34,7 @@ function AttackBarChart() {
     const interval = setInterval(fetchAttackData, 3000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [websiteId]);
 
   const attackColors = {
     BENIGN: "#22C55E",

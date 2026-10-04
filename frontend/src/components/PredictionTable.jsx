@@ -7,12 +7,12 @@ import {
   FaNetworkWired,
 } from "react-icons/fa";
 
-function PredictionTable({ setSelectedPrediction }) {
+function PredictionTable({ websiteId, setSelectedPrediction }) {
   const [predictions, setPredictions] = useState([]);
 
   const fetchPredictions = async () => {
     try {
-      const response = await API.get("/history");
+      const response = await API.get("/history", { params: { website_id: websiteId } });
       setPredictions(response.data.data || []);
     } catch (error) {
       console.error("Prediction History Error:", error);
@@ -24,7 +24,7 @@ function PredictionTable({ setSelectedPrediction }) {
 
     const interval = setInterval(fetchPredictions, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [websiteId]);
 
   // Severity Mapping
   const getSeverity = (attack) => {

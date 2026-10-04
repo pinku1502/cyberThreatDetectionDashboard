@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 import {
   FaShieldAlt,
   FaUser,
@@ -12,18 +13,32 @@ import {
 } from "react-icons/fa";
 
 function Login({ onLogin }) {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [_loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    // Demo Login
-    if (username === "admin" && password === "admin123") {
-      onLogin(username);
-    } else {
-      alert("Invalid Username or Password");
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        { email, password }
+      );
+
+      localStorage.setItem("cyberAuthToken", response.data.token);
+      onLogin(response.data.user, response.data.token);
+    } catch (requestError) {
+      setError(
+        requestError.response?.data?.message ||
+          "Unable to sign in. Contact your administrator."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -147,20 +162,20 @@ function Login({ onLogin }) {
           {/* Login Form */}
           <form onSubmit={handleLogin} className="mt-8 space-y-6">
 
-            {/* Username */}
+            {/* Email */}
             <div>
               <label className="text-sm font-semibold text-slate-700">
-                Username
+                Email address
               </label>
 
               <div className="flex items-center bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 mt-2 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-200 transition">
                 <FaUser className="text-blue-600 mr-3 text-lg" />
 
                 <input
-                  type="text"
-                  placeholder="admin"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  type="email"
+                  placeholder="admin@cyberthreat.local"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full outline-none bg-transparent text-slate-800"
                 />
               </div>
@@ -177,7 +192,7 @@ function Login({ onLogin }) {
 
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="admin123"
+                  placeholder="Admin@123456"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full outline-none bg-transparent text-slate-800"
@@ -203,6 +218,10 @@ function Login({ onLogin }) {
 
           </form>
 
+          {error && (
+            <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>
+          )}
+
           {/* Demo Credentials */}
           <div className="mt-6 bg-blue-50 border border-blue-200 rounded-2xl p-4">
             <h3 className="text-blue-700 font-bold text-sm mb-2">
@@ -210,11 +229,11 @@ function Login({ onLogin }) {
             </h3>
 
             <p className="text-sm text-slate-700">
-              Username: <span className="font-semibold">admin</span>
+              Email: <span className="font-semibold">admin@cyberthreat.local</span>
             </p>
 
             <p className="text-sm text-slate-700">
-              Password: <span className="font-semibold">admin123</span>
+              Password: <span className="font-semibold">Admin@123456</span>
             </p>
           </div>
 

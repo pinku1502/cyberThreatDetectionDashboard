@@ -8,7 +8,7 @@ import {
   FaArrowUp,
 } from "react-icons/fa";
 
-function SummaryCards() {
+function SummaryCards({ websiteId }) {
   const [stats, setStats] = useState({
     total_predictions: 0,
     benign_predictions: 0,
@@ -18,7 +18,7 @@ function SummaryCards() {
 
   const fetchStats = async () => {
     try {
-      const response = await API.get("/stats");
+      const response = await API.get("/stats", { params: { website_id: websiteId } });
 
       setStats({
         total_predictions:
@@ -41,7 +41,7 @@ function SummaryCards() {
     const interval = setInterval(fetchStats, 3000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [websiteId]);
 
   const cards = [
     {

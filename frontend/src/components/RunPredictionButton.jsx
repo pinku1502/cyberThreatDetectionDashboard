@@ -26,7 +26,7 @@ const severityStyles = {
   Low: "border-green-300 bg-green-50 text-green-800",
 };
 
-export default function RunPredictionButton() {
+export default function RunPredictionButton({ websiteId }) {
   const [selectedAttack, setSelectedAttack] = useState("DDoS");
   const [loading, setLoading] = useState(false);
   const [prediction, setPrediction] = useState(null);
@@ -41,7 +41,7 @@ export default function RunPredictionButton() {
         params: { attack: selectedAttack },
       });
 
-      const response = await API.post("/", sampleResponse.data.data.features);
+      const response = await API.post("/", { ...sampleResponse.data.data.features, website_id: websiteId });
       setPrediction(response.data.data);
     } catch (requestError) {
       console.error("Attack simulation failed:", requestError);

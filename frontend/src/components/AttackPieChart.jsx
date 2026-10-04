@@ -9,12 +9,12 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-function AttackPieChart() {
+function AttackPieChart({ websiteId }) {
   const [attackData, setAttackData] = useState([]);
 
   const fetchChartData = async () => {
     try {
-      const response = await API.get("/chart");
+      const response = await API.get("/chart", { params: { website_id: websiteId } });
       setAttackData(response.data.data || []);
     } catch (error) {
       console.error("Pie Chart Error:", error);
@@ -25,7 +25,7 @@ function AttackPieChart() {
     fetchChartData();
     const interval = setInterval(fetchChartData, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [websiteId]);
 
   // 15-Class Cyber Security Colors
   const attackColors = {
